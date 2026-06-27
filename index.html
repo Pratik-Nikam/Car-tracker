@@ -29,7 +29,6 @@ label{font-size:12px;font-weight:500;color:#7070a0;text-transform:uppercase;lett
 .tag{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
 .ai-bubble{background:#151520;border-left:3px solid #4a9eff;border-radius:0 8px 8px 0;padding:16px 20px;font-size:14px;line-height:1.7;color:#c8c6d0;white-space:pre-wrap}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .grid-auto{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
 .fade-in{animation:fadeIn 0.25s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
@@ -41,14 +40,39 @@ label{font-size:12px;font-weight:500;color:#7070a0;text-transform:uppercase;lett
 ::-webkit-scrollbar{width:6px}
 ::-webkit-scrollbar-track{background:#0f0f13}
 ::-webkit-scrollbar-thumb{background:#2a2a38;border-radius:3px}
-@media(max-width:600px){.grid2,.grid3{grid-template-columns:1fr}.grid-auto{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.grid2,.grid-auto{grid-template-columns:1fr}}
+
+/* Autocomplete */
+.ac-wrap{position:relative}
+.ac-list{position:absolute;top:100%;left:0;right:0;background:#1a1a22;border:1px solid #4a9eff;border-top:none;border-radius:0 0 8px 8px;z-index:50;max-height:200px;overflow-y:auto}
+.ac-item{padding:10px 14px;font-size:14px;cursor:pointer;color:#e8e6e0;transition:background 0.1s}
+.ac-item:hover,.ac-item.focused{background:#2a2a38}
+
+/* Photo grid */
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:12px}
+.photo-thumb{position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;background:#12121a;border:1px solid #2a2a38;cursor:pointer}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-thumb .del-photo{position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.7);border:none;border-radius:50%;width:22px;height:22px;color:#ff6b6b;cursor:pointer;font-size:12px;display:none;align-items:center;justify-content:center}
+.photo-thumb:hover .del-photo{display:flex}
+.photo-thumb .photo-label{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);font-size:10px;color:#e8e6e0;padding:3px 6px;text-align:center}
+.photo-drop{border:2px dashed #2a2a38;border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;margin-top:8px}
+.photo-drop:hover,.photo-drop.drag-over{border-color:#4a9eff;background:#4a9eff0a}
+.photo-drop p{font-size:13px;color:#7070a0;margin-top:6px}
+
+/* Lightbox */
+#lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column}
+#lightbox img{max-width:90vw;max-height:80vh;border-radius:8px;object-fit:contain}
+#lightbox .lb-label{color:#a0a0b8;font-size:13px;margin-top:10px}
+#lightbox .lb-close{position:absolute;top:20px;right:24px;font-size:28px;color:#fff;cursor:pointer;background:none;border:none}
+#lightbox .lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.1);border:none;color:#fff;font-size:24px;padding:12px 16px;cursor:pointer;border-radius:8px}
+#lightbox .lb-prev{left:16px}
+#lightbox .lb-next{right:16px}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
 <div id="nav" style="border-bottom:1px solid #1e1e28;padding:0 24px;position:sticky;top:0;background:#0f0f13;z-index:50">
-  <div style="max-width:900px;margin:0 auto;display:flex;align-items:center;height:56px;gap:8px">
+  <div style="max-width:960px;margin:0 auto;display:flex;align-items:center;height:56px;gap:8px">
     <span class="brand" style="font-size:20px;font-weight:700;color:#4a9eff;margin-right:24px;white-space:nowrap">🚗 CarPick</span>
     <button class="nav-item active" data-view="dashboard" onclick="showView('dashboard')">My Cars</button>
     <button class="nav-item" data-view="compare" onclick="showView('compare')">✨ AI Compare</button>
@@ -57,11 +81,9 @@ label{font-size:12px;font-weight:500;color:#7070a0;text-transform:uppercase;lett
   </div>
 </div>
 
-<!-- MAIN -->
-<div style="max-width:900px;margin:0 auto;padding:28px 16px">
-  <div id="api-warning" style="display:none;background:#1a1a10;border:1px solid #ffaa4a44;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
-    <span>⚠️</span>
-    <span style="font-size:13px;color:#ffaa4a">Set your Anthropic API key to use AI features</span>
+<div style="max-width:960px;margin:0 auto;padding:28px 16px">
+  <div id="api-warning" style="display:none;background:#1a1a10;border:1px solid #ffaa4a44;border-radius:12px;padding:14px 18px;margin-bottom:20px;align-items:center;gap:12px">
+    <span>⚠️</span><span style="font-size:13px;color:#ffaa4a">Set your Anthropic API key to use AI features</span>
     <button class="btn btn-ghost" style="margin-left:auto;font-size:12px;padding:6px 12px" onclick="openSettings()">Set Key →</button>
   </div>
   <div id="view-dashboard" class="fade-in"></div>
@@ -70,14 +92,14 @@ label{font-size:12px;font-weight:500;color:#7070a0;text-transform:uppercase;lett
   <div id="view-form" class="fade-in" style="display:none"></div>
 </div>
 
-<!-- SETTINGS MODAL -->
+<!-- Settings Modal -->
 <div id="modal-settings" class="overlay" style="display:none" onclick="if(event.target===this)closeSettings()">
   <div class="card" style="width:100%;max-width:480px;padding:32px">
     <h2 class="brand" style="font-size:20px;font-weight:700;margin-bottom:8px">API Key</h2>
     <p style="font-size:13px;color:#7070a0;margin-bottom:20px">Stored only in your browser — never sent anywhere except Anthropic.</p>
     <label>Anthropic API Key</label>
     <input type="password" id="api-key-input" placeholder="sk-ant-..." style="margin-bottom:12px"/>
-    <p style="font-size:12px;color:#50507a;margin-bottom:24px">Get a free key at <a href="https://console.anthropic.com" target="_blank" style="color:#4a9eff">console.anthropic.com</a> — includes $5 free credit.</p>
+    <p style="font-size:12px;color:#50507a;margin-bottom:24px">Get a free key at <a href="https://console.anthropic.com" target="_blank" style="color:#4a9eff">console.anthropic.com</a></p>
     <div style="display:flex;gap:12px">
       <button class="btn btn-primary" onclick="saveApiKey()">Save</button>
       <button class="btn btn-ghost" onclick="closeSettings()">Cancel</button>
@@ -85,108 +107,261 @@ label{font-size:12px;font-weight:500;color:#7070a0;text-transform:uppercase;lett
   </div>
 </div>
 
+<!-- Lightbox -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button class="lb-close" onclick="closeLightbox()">✕</button>
+  <button class="lb-nav lb-prev" onclick="event.stopPropagation();lbNav(-1)">‹</button>
+  <img id="lb-img" src="" alt=""/>
+  <div id="lb-label" class="lb-label"></div>
+  <button class="lb-nav lb-next" onclick="event.stopPropagation();lbNav(1)">›</button>
+</div>
+
 <script>
-// ── State ──────────────────────────────────────────────────────────
-const STORE = 'carpick_cars';
-const KEY_STORE = 'carpick_key';
-let cars = [];
-let apiKey = '';
-let currentView = 'dashboard';
-let editingCar = null;
+// ── Car DB ─────────────────────────────────────────────────────────
+const STORE='carpick_cars', KEY_STORE='carpick_key';
+let cars=[], apiKey='', currentView='dashboard', editingCar=null;
+let lbPhotos=[], lbIdx=0;
 
-try { cars = JSON.parse(localStorage.getItem(STORE)) || []; } catch{}
-apiKey = localStorage.getItem(KEY_STORE) || '';
+try{cars=JSON.parse(localStorage.getItem(STORE))||[];}catch{}
+apiKey=localStorage.getItem(KEY_STORE)||'';
 
-// ── Helpers ────────────────────────────────────────────────────────
-function save() { localStorage.setItem(STORE, JSON.stringify(cars)); }
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function stars(n) {
-  return [1,2,3,4,5].map(i=>`<span style="color:${i<=n?'#ffaa4a':'#2a2a38'}">★</span>`).join('');
+function save(){localStorage.setItem(STORE,JSON.stringify(cars));}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function stars(n){return[1,2,3,4,5].map(i=>`<span style="color:${i<=n?'#ffaa4a':'#2a2a38'}">★</span>`).join('');}
+function statusTag(s){const m={Interested:'background:#1a3a5c;color:#4a9eff',Contacted:'background:#1a3a2a;color:#4aff90','Test Drove':'background:#3a2a1a;color:#ffaa4a',Passed:'background:#2a1a1a;color:#ff6b6b',Purchased:'background:#0d2a1a;color:#00e676'};return`<span class="tag" style="${m[s]||m.Interested}">${esc(s)}</span>`;}
+function uid(){return Date.now()+Math.random();}
+function fmtPrice(p){return p?'$'+parseInt(p).toLocaleString():'—';}
+
+// ── Car Makes & Models ─────────────────────────────────────────────
+const CAR_DATA = {
+  Toyota:['4Runner','Avalon','Camry','Corolla','Corolla Cross','GR86','Highlander','Land Cruiser','Prius','RAV4','RAV4 Prime','Sequoia','Sienna','Supra','Tacoma','Tundra','Venza'],
+  Honda:['Accord','Civic','CR-V','HR-V','Insight','Odyssey','Passport','Pilot','Ridgeline'],
+  Ford:['Bronco','Bronco Sport','Edge','Escape','Expedition','Explorer','F-150','F-250','Maverick','Mustang','Mustang Mach-E','Ranger'],
+  Chevrolet:['Blazer','Colorado','Corvette','Equinox','Malibu','Silverado 1500','Silverado 2500','Suburban','Tahoe','Trailblazer','Traverse'],
+  BMW:['2 Series','3 Series','4 Series','5 Series','7 Series','M2','M3','M4','M5','X1','X3','X5','X7','iX','i4'],
+  'Mercedes-Benz':['A-Class','C-Class','CLA','E-Class','GLA','GLB','GLC','GLE','GLS','S-Class','AMG GT','EQS'],
+  Audi:['A3','A4','A6','A7','A8','e-tron','Q3','Q5','Q7','Q8','RS5','S4','S5','TT'],
+  Nissan:['Altima','Armada','Frontier','Kicks','Leaf','Maxima','Murano','Pathfinder','Rogue','Sentra','Titan','Versa'],
+  Hyundai:['Elantra','Genesis','Ioniq 5','Ioniq 6','Kona','Palisade','Santa Cruz','Santa Fe','Sonata','Tucson','Venue'],
+  Kia:['Carnival','EV6','Forte','K5','Niro','Seltos','Sorento','Soul','Sportage','Stinger','Telluride'],
+  Subaru:['Ascent','BRZ','Crosstrek','Forester','Impreza','Legacy','Outback','Solterra','WRX'],
+  Mazda:['CX-30','CX-5','CX-50','CX-70','CX-90','Mazda3','Mazda6','MX-5 Miata'],
+  Volkswagen:['Atlas','Atlas Cross Sport','Golf','GTI','ID.4','Jetta','Passat','Taos','Tiguan'],
+  Lexus:['ES','GX','IS','LC','LS','LX','NX','RX','UX'],
+  Jeep:['Cherokee','Compass','Gladiator','Grand Cherokee','Renegade','Wrangler'],
+  Ram:['1500','2500','3500','ProMaster'],
+  GMC:['Acadia','Canyon','Sierra 1500','Sierra 2500','Terrain','Yukon'],
+  Dodge:['Challenger','Charger','Durango','Hornet'],
+  Chrysler:['300','Pacifica','Voyager'],
+  Buick:['Enclave','Encore','Encore GX','Envision'],
+  Cadillac:['CT4','CT5','Escalade','Lyriq','XT4','XT5','XT6'],
+  Acura:['ILX','Integra','MDX','RDX','TLX'],
+  Infiniti:['Q50','Q60','QX50','QX55','QX60','QX80'],
+  Lincoln:['Aviator','Corsair','Nautilus','Navigator'],
+  Volvo:['C40','S60','S90','V60','V90','XC40','XC60','XC90'],
+  Tesla:['Model 3','Model S','Model X','Model Y','Cybertruck'],
+  Rivian:['R1S','R1T'],
+  Lucid:['Air'],
+  Genesis:['G70','G80','G90','GV70','GV80'],
+  Porsche:['718 Boxster','718 Cayman','911','Cayenne','Macan','Panamera','Taycan'],
+  Jaguar:['E-Pace','F-Pace','F-Type','I-Pace','XE','XF'],
+  'Land Rover':['Defender','Discovery','Discovery Sport','Range Rover','Range Rover Evoque','Range Rover Sport','Range Rover Velar'],
+  Mini:['Clubman','Convertible','Countryman','Hardtop'],
+  Mitsubishi:['Eclipse Cross','Outlander','Outlander Sport'],
+  Suzuki:['Grand Vitara','Swift'],
+  Fiat:['500','500X'],
+  Alfa_Romeo:['Giulia','Stelvio','Tonale'],
+  Maserati:['Ghibli','GranTurismo','Levante','Quattroporte'],
+  Ferrari:['296 GTB','F8','Roma','SF90'],
+  Lamborghini:['Huracan','Urus'],
+  McLaren:['Artura','GT','720S'],
+};
+const ALL_MAKES = Object.keys(CAR_DATA).sort();
+
+// ── Autocomplete ───────────────────────────────────────────────────
+function makeAutocomplete(inputId, listId, items, onSelect) {
+  const inp = document.getElementById(inputId);
+  const list = document.getElementById(listId);
+  if (!inp||!list) return;
+  let focused = -1;
+
+  inp.addEventListener('input', () => {
+    const val = inp.value.toLowerCase().trim();
+    list.innerHTML = '';
+    focused = -1;
+    if (!val) { list.style.display='none'; return; }
+    const matches = items.filter(i=>i.toLowerCase().includes(val)).slice(0,10);
+    if (!matches.length) { list.style.display='none'; return; }
+    matches.forEach((m,i) => {
+      const div = document.createElement('div');
+      div.className='ac-item';
+      div.textContent=m;
+      div.onmousedown=()=>{ inp.value=m; list.style.display='none'; if(onSelect) onSelect(m); };
+      list.appendChild(div);
+    });
+    list.style.display='block';
+  });
+
+  inp.addEventListener('keydown', e => {
+    const items2 = list.querySelectorAll('.ac-item');
+    if (e.key==='ArrowDown'){focused=Math.min(focused+1,items2.length-1);items2.forEach((el,i)=>el.classList.toggle('focused',i===focused));e.preventDefault();}
+    else if(e.key==='ArrowUp'){focused=Math.max(focused-1,0);items2.forEach((el,i)=>el.classList.toggle('focused',i===focused));e.preventDefault();}
+    else if(e.key==='Enter'&&focused>=0){items2[focused].onmousedown();e.preventDefault();}
+    else if(e.key==='Escape'){list.style.display='none';}
+  });
+  inp.addEventListener('blur', ()=>setTimeout(()=>list.style.display='none',150));
 }
-function statusTag(s) {
-  const map = {Interested:'background:#1a3a5c;color:#4a9eff',Contacted:'background:#1a3a2a;color:#4aff90','Test Drove':'background:#3a2a1a;color:#ffaa4a',Passed:'background:#2a1a1a;color:#ff6b6b',Purchased:'background:#0d2a1a;color:#00e676'};
-  return `<span class="tag" style="${map[s]||map.Interested}">${esc(s)}</span>`;
+
+function updateModelList() {
+  const make = document.getElementById('f_make')?.value;
+  const models = CAR_DATA[make] || [];
+  window._currentModels = models;
+  // rebuild autocomplete with new models
+  const inp = document.getElementById('f_model');
+  if (inp) { inp.value=''; makeAutocomplete('f_model','ac-model', models.length?models:[], null); }
 }
-function uid() { return Date.now() + Math.random(); }
-function fmtPrice(p) { return p ? '$'+parseInt(p).toLocaleString() : '—'; }
+
+// ── Photo Handling ─────────────────────────────────────────────────
+let formPhotos = []; // [{data:base64, label:'main'|'damage'|'interior'|'other', name}]
+
+function initPhotoZone() {
+  formPhotos = editingCar?.photos ? [...editingCar.photos] : [];
+  renderFormPhotos();
+
+  // paste from clipboard
+  document.addEventListener('paste', handlePaste);
+
+  // drag and drop
+  const drop = document.getElementById('photo-drop');
+  if (!drop) return;
+  drop.addEventListener('dragover', e=>{e.preventDefault();drop.classList.add('drag-over');});
+  drop.addEventListener('dragleave', ()=>drop.classList.remove('drag-over'));
+  drop.addEventListener('drop', e=>{e.preventDefault();drop.classList.remove('drag-over');handleFiles(e.dataTransfer.files);});
+  drop.addEventListener('click', ()=>document.getElementById('photo-file').click());
+  document.getElementById('photo-file').addEventListener('change', e=>handleFiles(e.target.files));
+}
+
+function handlePaste(e) {
+  if (!document.getElementById('view-form').style.display || document.getElementById('view-form').style.display==='none') return;
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile();
+      readPhotoFile(file, 'Pasted');
+    }
+  }
+}
+
+function handleFiles(files) {
+  [...files].forEach(f=>{ if(f.type.startsWith('image/')) readPhotoFile(f, f.name); });
+}
+
+function readPhotoFile(file, name) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    formPhotos.push({data:e.target.result, label:'main', name: name||'photo'});
+    renderFormPhotos();
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderFormPhotos() {
+  const grid = document.getElementById('photo-grid');
+  if (!grid) return;
+  if (!formPhotos.length) { grid.innerHTML=''; return; }
+  grid.innerHTML = formPhotos.map((p,i)=>`
+    <div class="photo-thumb" onclick="openLightboxForm(${i})">
+      <img src="${p.data}" alt="${esc(p.label)}"/>
+      <button class="del-photo" onclick="event.stopPropagation();removePhoto(${i})">✕</button>
+      <div class="photo-label">
+        <select onchange="event.stopPropagation();setPhotoLabel(${i},this.value)" onclick="event.stopPropagation()" style="background:transparent;border:none;color:#e8e6e0;font-size:10px;padding:0;width:100%;cursor:pointer">
+          ${['Main','Interior','Damage','Odometer','Other'].map(l=>`<option${p.label===l.toLowerCase()?' selected':''}>${l}</option>`).join('')}
+        </select>
+      </div>
+    </div>`).join('');
+}
+
+function removePhoto(i) { formPhotos.splice(i,1); renderFormPhotos(); }
+function setPhotoLabel(i,v){ formPhotos[i].label=v.toLowerCase(); }
+
+// Lightbox
+function openLightboxForm(idx) {
+  lbPhotos = formPhotos;
+  lbIdx = idx;
+  showLightbox();
+}
+function openLightboxView(photos, idx) {
+  lbPhotos = photos;
+  lbIdx = idx;
+  showLightbox();
+}
+function showLightbox() {
+  const p = lbPhotos[lbIdx];
+  document.getElementById('lb-img').src = p.data;
+  document.getElementById('lb-label').textContent = p.label + (p.name?' — '+p.name:'');
+  document.getElementById('lightbox').style.display='flex';
+}
+function closeLightbox(){ document.getElementById('lightbox').style.display='none'; }
+function lbNav(dir){ lbIdx=(lbIdx+dir+lbPhotos.length)%lbPhotos.length; showLightbox(); }
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('lightbox').style.display==='flex'){
+    if(e.key==='ArrowLeft')lbNav(-1);
+    if(e.key==='ArrowRight')lbNav(1);
+    if(e.key==='Escape')closeLightbox();
+  }
+});
 
 // ── Nav ────────────────────────────────────────────────────────────
 function showView(v) {
-  ['dashboard','compare','analyze','form'].forEach(n => {
-    document.getElementById('view-'+n).style.display = n===v?'block':'none';
+  ['dashboard','compare','analyze','form'].forEach(n=>{
+    document.getElementById('view-'+n).style.display=n===v?'block':'none';
   });
-  document.querySelectorAll('.nav-item').forEach(b => {
-    b.classList.toggle('active', b.dataset.view === v);
-  });
-  currentView = v;
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  currentView=v;
   checkApiWarning();
-  if (v==='dashboard') renderDashboard();
-  if (v==='compare') renderCompare();
-  if (v==='analyze') renderAnalyze();
+  if(v==='dashboard'){renderDashboard();document.removeEventListener('paste',handlePaste);}
+  if(v==='compare') renderCompare();
+  if(v==='analyze') renderAnalyze();
 }
-
-function checkApiWarning() {
-  const w = document.getElementById('api-warning');
-  w.style.display = (!apiKey && currentView !== 'dashboard') ? 'flex' : 'none';
+function checkApiWarning(){
+  const w=document.getElementById('api-warning');
+  w.style.display=(!apiKey&&currentView!=='dashboard')?'flex':'none';
 }
 
 // ── Settings ───────────────────────────────────────────────────────
-function openSettings() {
-  document.getElementById('api-key-input').value = apiKey;
-  document.getElementById('modal-settings').style.display = 'flex';
-}
-function closeSettings() { document.getElementById('modal-settings').style.display = 'none'; }
-function saveApiKey() {
-  apiKey = document.getElementById('api-key-input').value.trim();
-  localStorage.setItem(KEY_STORE, apiKey);
-  closeSettings();
-  checkApiWarning();
-  const btn = document.querySelector('button[onclick="openSettings()"]');
-  if(btn) btn.textContent = apiKey ? '⚙ Key ✓' : '⚙ API Key';
-}
+function openSettings(){document.getElementById('api-key-input').value=apiKey;document.getElementById('modal-settings').style.display='flex';}
+function closeSettings(){document.getElementById('modal-settings').style.display='none';}
+function saveApiKey(){apiKey=document.getElementById('api-key-input').value.trim();localStorage.setItem(KEY_STORE,apiKey);closeSettings();checkApiWarning();}
 
 // ── Dashboard ──────────────────────────────────────────────────────
 function renderDashboard() {
-  const el = document.getElementById('view-dashboard');
-  if (!cars.length) {
-    el.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
-        <h2 class="brand" style="font-size:24px;font-weight:700">My Cars</h2>
-        <button class="btn btn-primary" onclick="openForm(null)">+ Add Car</button>
-      </div>
-      <div class="card" style="padding:60px;text-align:center">
-        <div style="font-size:48px;margin-bottom:16px">🚗</div>
-        <p class="brand" style="font-size:18px;font-weight:600;margin-bottom:8px">No cars yet</p>
-        <p style="color:#7070a0;font-size:14px;margin-bottom:24px">Start tracking cars you're considering</p>
-        <button class="btn btn-primary" onclick="openForm(null)">Add your first car</button>
-      </div>`;
+  const el=document.getElementById('view-dashboard');
+  if(!cars.length){
+    el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px"><h2 class="brand" style="font-size:24px;font-weight:700">My Cars</h2><button class="btn btn-primary" onclick="openForm(null)">+ Add Car</button></div><div class="card" style="padding:60px;text-align:center"><div style="font-size:48px;margin-bottom:16px">🚗</div><p class="brand" style="font-size:18px;font-weight:600;margin-bottom:8px">No cars yet</p><p style="color:#7070a0;font-size:14px;margin-bottom:24px">Start tracking cars you're considering</p><button class="btn btn-primary" onclick="openForm(null)">Add your first car</button></div>`;
     return;
   }
-  const best = [...cars].sort((a,b)=>(b.rating||0)-(a.rating||0))[0];
-  const bestBanner = best ? `
-    <div style="background:linear-gradient(135deg,#0d2040,#0d1a30);border:1px solid #4a9eff33;border-radius:12px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-      <span style="font-size:28px">🏆</span>
-      <div>
-        <div style="font-size:11px;font-weight:600;color:#4a9eff;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Top Rated</div>
-        <div class="brand" style="font-size:17px;font-weight:700">${esc(best.year)} ${esc(best.make)} ${esc(best.model)}</div>
-        <div style="margin-top:4px">${stars(best.rating)} <span style="color:#7070a0;font-size:13px;margin-left:8px">${fmtPrice(best.askingPrice)}</span></div>
-      </div>
-      <button class="btn btn-ghost" style="margin-left:auto;font-size:13px" onclick="showView('compare')">Compare All →</button>
-    </div>` : '';
+  const best=[...cars].sort((a,b)=>(b.rating||0)-(a.rating||0))[0];
+  const bestBanner=best?`<div style="background:linear-gradient(135deg,#0d2040,#0d1a30);border:1px solid #4a9eff33;border-radius:12px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap"><span style="font-size:28px">🏆</span><div><div style="font-size:11px;font-weight:600;color:#4a9eff;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Top Rated</div><div class="brand" style="font-size:17px;font-weight:700">${esc(best.year)} ${esc(best.make)} ${esc(best.model)}</div><div style="margin-top:4px">${stars(best.rating)} <span style="color:#7070a0;font-size:13px;margin-left:8px">${fmtPrice(best.askingPrice)}</span></div></div><button class="btn btn-ghost" style="margin-left:auto;font-size:13px" onclick="showView('compare')">Compare All →</button></div>`:'';
 
-  const carCards = cars.map(c => `
-    <div class="card" style="padding:18px 20px;display:flex;gap:16px;align-items:flex-start;transition:border-color 0.2s" onmouseover="this.style.borderColor='#4a9eff44'" onmouseout="this.style.borderColor='#2a2a38'">
+  const carCards=cars.map(c=>{
+    const mainPhoto=c.photos?.find(p=>p.label==='main')||c.photos?.[0];
+    const photoThumb=mainPhoto?`<img src="${mainPhoto.data}" alt="car" style="width:80px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer" onclick="openLightboxView(${JSON.stringify(c.photos||[]).replace(/"/g,'&quot;')},0)"/>`:`<div style="width:80px;height:60px;border-radius:8px;background:#12121a;border:1px solid #2a2a38;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🚗</div>`;
+    return`<div class="card" style="padding:16px 20px;display:flex;gap:16px;align-items:flex-start;transition:border-color 0.2s" onmouseover="this.style.borderColor='#4a9eff44'" onmouseout="this.style.borderColor='#2a2a38'">
+      ${photoThumb}
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
           <span class="brand" style="font-size:16px;font-weight:700">${esc(c.year)} ${esc(c.make)} ${esc(c.model)} ${esc(c.trim)}</span>
           ${statusTag(c.status)}
-          ${c.rating ? stars(c.rating) : ''}
+          ${c.rating?stars(c.rating):''}
         </div>
         <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:#7070a0">
           ${c.askingPrice?`<span>💰 ${fmtPrice(c.askingPrice)}</span>`:''}
           ${c.mileage?`<span>📍 ${parseInt(c.mileage).toLocaleString()} mi</span>`:''}
           ${c.titleStatus?`<span>📋 ${esc(c.titleStatus)}</span>`:''}
           ${c.location?`<span>📌 ${esc(c.location)}</span>`:''}
+          ${c.photos?.length?`<span>📷 ${c.photos.length} photo${c.photos.length>1?'s':''}</span>`:''}
+          ${c.carfaxUrl?`<a href="${esc(c.carfaxUrl)}" target="_blank" style="color:#4a9eff;text-decoration:none;font-size:13px">📊 Carfax ↗</a>`:''}
         </div>
         ${c.pros?`<p style="font-size:13px;color:#4aff90;margin-top:8px">✓ ${esc(c.pros.substring(0,100))}${c.pros.length>100?'…':''}</p>`:''}
         ${c.cons?`<p style="font-size:13px;color:#ff8080;margin-top:4px">✗ ${esc(c.cons.substring(0,100))}${c.cons.length>100?'…':''}</p>`:''}
@@ -195,267 +370,262 @@ function renderDashboard() {
         <button class="btn btn-ghost" style="padding:6px 14px;font-size:13px" onclick="openForm('${c.id}')">Edit</button>
         <button class="btn btn-danger" style="padding:6px 12px;font-size:13px" onclick="deleteCar('${c.id}')">✕</button>
       </div>
-    </div>`).join('');
-
-  el.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
-      <div>
-        <h2 class="brand" style="font-size:24px;font-weight:700">My Cars</h2>
-        <p style="font-size:13px;color:#7070a0;margin-top:4px">${cars.length} tracked</p>
-      </div>
-      <button class="btn btn-primary" onclick="openForm(null)">+ Add Car</button>
-    </div>
-    ${bestBanner}
-    <div style="display:grid;gap:12px">${carCards}</div>`;
-}
-
-function deleteCar(id) {
-  if (!confirm('Remove this car?')) return;
-  cars = cars.filter(c => String(c.id) !== String(id));
-  save(); renderDashboard();
-}
-
-// ── Car Form ───────────────────────────────────────────────────────
-const DEFAULTS = {year:'',make:'',model:'',trim:'',color:'',vin:'',url:'',askingPrice:'',targetPrice:'',kbbValue:'',sellerType:'Dealer',mileage:'',titleStatus:'Clean',titleDamageNotes:'',owners:'',accidentHistory:'No',carfaxUrl:'',carfaxNotes:'',lastService:'',knownIssues:'',repairCost:'',maintenanceCost:'',inspectionDone:'No',inspectionNotes:'',location:'',distance:'',testDrive:'No',testDriveNotes:'',rating:0,pros:'',cons:'',status:'Interested',notes:''};
-
-function field(label, id, type='text', options=null, placeholder='') {
-  if (options) {
-    return `<div><label>${label}</label><select id="f_${id}">${options.map(o=>`<option>${o}</option>`).join('')}</select></div>`;
-  }
-  if (type==='textarea') {
-    return `<div><label>${label}</label><textarea id="f_${id}" rows="3" placeholder="${placeholder}"></textarea></div>`;
-  }
-  return `<div><label>${label}</label><input type="${type}" id="f_${id}" placeholder="${placeholder}"/></div>`;
-}
-
-function openForm(id) {
-  editingCar = id ? cars.find(c=>String(c.id)===String(id)) : null;
-  const c = editingCar || DEFAULTS;
-  const formEl = document.getElementById('view-form');
-  formEl.innerHTML = `
-    <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px">
-      <button class="btn btn-ghost" onclick="closeForm()" style="padding:8px 14px">← Back</button>
-      <h2 class="brand" style="font-size:22px;font-weight:700">${id?'Edit Car':'Add Car'}</h2>
-    </div>
-    <div style="display:grid;gap:20px">
-      <div class="card" style="padding:24px">
-        <p style="font-size:12px;font-weight:600;color:#4a9eff;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Basic Info</p>
-        <div class="grid-auto">
-          ${field('Year','year','text','','2021')}
-          ${field('Make','make','text','','Toyota')}
-          ${field('Model','model','text','','Camry')}
-          ${field('Trim','trim','text','','SE')}
-          ${field('Color','color','text','','Silver')}
-          ${field('VIN','vin','text','','1HGBH41...')}
-        </div>
-        <div style="margin-top:16px">${field('Listing URL','url','text','','https://cars.com/...')}</div>
-      </div>
-      <div class="card" style="padding:24px">
-        <p style="font-size:12px;font-weight:600;color:#4aff90;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Pricing</p>
-        <div class="grid-auto">
-          ${field('Asking Price ($)','askingPrice','number','','18500')}
-          ${field('Your Target ($)','targetPrice','number','','17000')}
-          ${field('KBB Value ($)','kbbValue','number','','19000')}
-          ${field('Seller Type','sellerType','',['Dealer','Private Seller','CPO'])}
-        </div>
-      </div>
-      <div class="card" style="padding:24px">
-        <p style="font-size:12px;font-weight:600;color:#ffaa4a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Condition</p>
-        <div class="grid-auto">
-          ${field('Mileage','mileage','number','','45000')}
-          ${field('Title Status','titleStatus','',['Clean','Salvage','Rebuilt','Lemon'])}
-          ${field('# of Owners','owners','number','','2')}
-          ${field('Accident History','accidentHistory','',['No','Yes','Unknown'])}
-        </div>
-        <div class="grid2" style="margin-top:16px">
-          ${field('Title Damage Notes','titleDamageNotes','textarea','','Any issues...')}
-          ${field('Carfax Notes','carfaxNotes','textarea','','Report summary...')}
-        </div>
-        <div style="margin-top:16px">${field('Carfax URL','carfaxUrl','text','','https://carfax.com/...')}</div>
-      </div>
-      <div class="card" style="padding:24px">
-        <p style="font-size:12px;font-weight:600;color:#d080ff;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Maintenance & Cost</p>
-        <div class="grid-auto">
-          ${field('Last Service','lastService','date')}
-          ${field('Est. Repair Cost ($)','repairCost','number','','500')}
-          ${field('Est. Maintenance ($)','maintenanceCost','number','','800')}
-          ${field('Inspection Done?','inspectionDone','',['No','Yes','Scheduled'])}
-        </div>
-        <div class="grid2" style="margin-top:16px">
-          ${field('Known Issues','knownIssues','textarea','','Any problems...')}
-          ${field('Inspection Notes','inspectionNotes','textarea','','Mechanic findings...')}
-        </div>
-      </div>
-      <div class="card" style="padding:24px">
-        <p style="font-size:12px;font-weight:600;color:#ff8080;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Practical</p>
-        <div class="grid-auto">
-          ${field('Location','location','text','','Dallas, TX')}
-          ${field('Distance (miles)','distance','number','','12')}
-          ${field('Test Drive?','testDrive','',['No','Yes','Scheduled'])}
-        </div>
-        <div style="margin-top:16px">${field('Test Drive Notes','testDriveNotes','textarea','','How did it feel?')}</div>
-      </div>
-      <div class="card" style="padding:24px">
-        <p style="font-size:12px;font-weight:600;color:#80ffcc;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Your Decision</p>
-        <div class="grid2" style="margin-bottom:16px">
-          <div>
-            <label>Overall Rating</label>
-            <div id="star-picker" style="display:flex;gap:6px;margin-top:4px"></div>
-          </div>
-          ${field('Status','status','',['Interested','Contacted','Test Drove','Passed','Purchased'])}
-        </div>
-        <div class="grid2">
-          ${field('Pros','pros','textarea','','What you like...')}
-          ${field('Cons','cons','textarea','','What concerns you...')}
-        </div>
-        <div style="margin-top:16px">${field('Notes','notes','textarea','','Anything else...')}</div>
-      </div>
-      <div style="display:flex;gap:12px;padding-bottom:40px">
-        <button class="btn btn-primary" style="flex:1;padding:14px;font-size:15px" onclick="submitForm()">${id?'Save Changes':'Add Car'}</button>
-        <button class="btn btn-ghost" onclick="closeForm()">Cancel</button>
-      </div>
     </div>`;
+  }).join('');
 
-  // Populate values
-  Object.keys(DEFAULTS).forEach(k => {
-    const el = document.getElementById('f_'+k);
-    if (el) el.value = c[k] || '';
-  });
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px"><div><h2 class="brand" style="font-size:24px;font-weight:700">My Cars</h2><p style="font-size:13px;color:#7070a0;margin-top:4px">${cars.length} tracked</p></div><button class="btn btn-primary" onclick="openForm(null)">+ Add Car</button></div>${bestBanner}<div style="display:grid;gap:12px">${carCards}</div>`;
+}
+
+function deleteCar(id){if(!confirm('Remove this car?'))return;cars=cars.filter(c=>String(c.id)!==String(id));save();renderDashboard();}
+
+// ── Form ───────────────────────────────────────────────────────────
+const DEFAULTS={year:'',make:'',model:'',trim:'',color:'',vin:'',url:'',askingPrice:'',targetPrice:'',kbbValue:'',sellerType:'Dealer',mileage:'',titleStatus:'Clean',titleDamageNotes:'',owners:'',accidentHistory:'No',carfaxUrl:'',carfaxNotes:'',lastService:'',knownIssues:'',repairCost:'',maintenanceCost:'',inspectionDone:'No',inspectionNotes:'',location:'',distance:'',testDrive:'No',testDriveNotes:'',rating:0,pros:'',cons:'',status:'Interested',notes:'',photos:[]};
+
+function sel(id,options,val){return`<select id="f_${id}">${options.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('')}</select>`;}
+function inp(id,type,placeholder,val){return`<input type="${type}" id="f_${id}" placeholder="${esc(placeholder)}" value="${esc(val||'')}"/>`;}
+function ta(id,placeholder,val){return`<textarea id="f_${id}" rows="3" placeholder="${esc(placeholder)}">${esc(val||'')}</textarea>`;}
+
+function openForm(id){
+  editingCar=id?cars.find(c=>String(c.id)===String(id)):null;
+  const c=editingCar||DEFAULTS;
+  const formEl=document.getElementById('view-form');
+
+  formEl.innerHTML=`
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px">
+    <button class="btn btn-ghost" onclick="closeForm()" style="padding:8px 14px">← Back</button>
+    <h2 class="brand" style="font-size:22px;font-weight:700">${id?'Edit Car':'Add Car'}</h2>
+  </div>
+  <div style="display:grid;gap:20px">
+
+    <!-- Basic Info -->
+    <div class="card" style="padding:24px">
+      <p style="font-size:12px;font-weight:600;color:#4a9eff;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Basic Info</p>
+      <div class="grid-auto">
+        <div><label>Year</label>${inp('year','number','2021',c.year)}</div>
+        <div>
+          <label>Make</label>
+          <div class="ac-wrap">
+            <input type="text" id="f_make" placeholder="Toyota" value="${esc(c.make)}" autocomplete="off" oninput="updateModelList()"/>
+            <div id="ac-make" class="ac-list" style="display:none"></div>
+          </div>
+        </div>
+        <div>
+          <label>Model</label>
+          <div class="ac-wrap">
+            <input type="text" id="f_model" placeholder="Camry" value="${esc(c.model)}" autocomplete="off"/>
+            <div id="ac-model" class="ac-list" style="display:none"></div>
+          </div>
+        </div>
+        <div><label>Trim</label>${inp('trim','text','SE',c.trim)}</div>
+        <div><label>Color</label>${inp('color','text','Silver',c.color)}</div>
+        <div><label>VIN</label>${inp('vin','text','1HGBH41...',c.vin)}</div>
+      </div>
+      <div style="margin-top:16px"><label>Listing URL</label>${inp('url','text','https://cars.com/...',c.url)}</div>
+    </div>
+
+    <!-- Pricing -->
+    <div class="card" style="padding:24px">
+      <p style="font-size:12px;font-weight:600;color:#4aff90;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Pricing</p>
+      <div class="grid-auto">
+        <div><label>Asking Price ($)</label>${inp('askingPrice','number','18500',c.askingPrice)}</div>
+        <div><label>Your Target ($)</label>${inp('targetPrice','number','17000',c.targetPrice)}</div>
+        <div><label>KBB Value ($)</label>${inp('kbbValue','number','19000',c.kbbValue)}</div>
+        <div><label>Seller Type</label>${sel('sellerType',['Dealer','Private Seller','CPO'],c.sellerType)}</div>
+      </div>
+    </div>
+
+    <!-- Condition -->
+    <div class="card" style="padding:24px">
+      <p style="font-size:12px;font-weight:600;color:#ffaa4a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Condition</p>
+      <div class="grid-auto">
+        <div><label>Mileage</label>${inp('mileage','number','45000',c.mileage)}</div>
+        <div><label>Title Status</label>${sel('titleStatus',['Clean','Salvage','Rebuilt','Lemon'],c.titleStatus)}</div>
+        <div><label># of Owners</label>${inp('owners','number','2',c.owners)}</div>
+        <div><label>Accident History</label>${sel('accidentHistory',['No','Yes','Unknown'],c.accidentHistory)}</div>
+      </div>
+      <div class="grid2" style="margin-top:16px">
+        <div><label>Title Damage Notes</label>${ta('titleDamageNotes','Any issues...',c.titleDamageNotes)}</div>
+        <div><label>Carfax Notes</label>${ta('carfaxNotes','Report summary...',c.carfaxNotes)}</div>
+      </div>
+      <div style="margin-top:16px"><label>Carfax Report URL</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          ${inp('carfaxUrl','text','https://carfax.com/...',c.carfaxUrl)}
+          <button class="btn btn-ghost" id="carfax-open-btn" onclick="openCarfax()" style="white-space:nowrap;padding:10px 14px;font-size:13px;flex-shrink:0" ${c.carfaxUrl?'':'disabled'}>Open ↗</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Maintenance -->
+    <div class="card" style="padding:24px">
+      <p style="font-size:12px;font-weight:600;color:#d080ff;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Maintenance & Cost</p>
+      <div class="grid-auto">
+        <div><label>Last Service</label><input type="date" id="f_lastService" value="${esc(c.lastService)}"/></div>
+        <div><label>Est. Repair Cost ($)</label>${inp('repairCost','number','500',c.repairCost)}</div>
+        <div><label>Est. Maintenance ($)</label>${inp('maintenanceCost','number','800',c.maintenanceCost)}</div>
+        <div><label>Inspection Done?</label>${sel('inspectionDone',['No','Yes','Scheduled'],c.inspectionDone)}</div>
+      </div>
+      <div class="grid2" style="margin-top:16px">
+        <div><label>Known Issues</label>${ta('knownIssues','Any problems...',c.knownIssues)}</div>
+        <div><label>Inspection Notes</label>${ta('inspectionNotes','Mechanic findings...',c.inspectionNotes)}</div>
+      </div>
+    </div>
+
+    <!-- Practical -->
+    <div class="card" style="padding:24px">
+      <p style="font-size:12px;font-weight:600;color:#ff8080;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Practical</p>
+      <div class="grid-auto">
+        <div><label>Location</label>${inp('location','text','Dallas, TX',c.location)}</div>
+        <div><label>Distance (miles)</label>${inp('distance','number','12',c.distance)}</div>
+        <div><label>Test Drive?</label>${sel('testDrive',['No','Yes','Scheduled'],c.testDrive)}</div>
+      </div>
+      <div style="margin-top:16px"><label>Test Drive Notes</label>${ta('testDriveNotes','How did it feel?',c.testDriveNotes)}</div>
+    </div>
+
+    <!-- Photos -->
+    <div class="card" style="padding:24px">
+      <p style="font-size:12px;font-weight:600;color:#60d0ff;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px">Photos</p>
+      <p style="font-size:12px;color:#50507a;margin-bottom:12px">Add car photos, damage shots, interior — paste from clipboard (Ctrl+V), drag & drop, or click to upload</p>
+      <div id="photo-drop" class="photo-drop">
+        <div style="font-size:28px">📷</div>
+        <p>Drag & drop, click to upload, or <strong style="color:#4a9eff">Ctrl+V</strong> to paste a screenshot</p>
+        <input type="file" id="photo-file" accept="image/*" multiple style="display:none"/>
+      </div>
+      <div id="photo-grid" class="photo-grid"></div>
+    </div>
+
+    <!-- Decision -->
+    <div class="card" style="padding:24px">
+      <p style="font-size:12px;font-weight:600;color:#80ffcc;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Your Decision</p>
+      <div class="grid2" style="margin-bottom:16px">
+        <div><label>Overall Rating</label><div id="star-picker" style="display:flex;gap:6px;margin-top:4px"></div></div>
+        <div><label>Status</label>${sel('status',['Interested','Contacted','Test Drove','Passed','Purchased'],c.status)}</div>
+      </div>
+      <div class="grid2">
+        <div><label>Pros</label>${ta('pros','What you like...',c.pros)}</div>
+        <div><label>Cons</label>${ta('cons','What concerns you...',c.cons)}</div>
+      </div>
+      <div style="margin-top:16px"><label>Notes</label>${ta('notes','Anything else...',c.notes)}</div>
+    </div>
+
+    <div style="display:flex;gap:12px;padding-bottom:40px">
+      <button class="btn btn-primary" style="flex:1;padding:14px;font-size:15px" onclick="submitForm()">${id?'Save Changes':'Add Car'}</button>
+      <button class="btn btn-ghost" onclick="closeForm()">Cancel</button>
+    </div>
+  </div>`;
 
   // Star picker
-  let rating = c.rating || 0;
-  const sp = document.getElementById('star-picker');
-  function renderStars() {
-    sp.innerHTML = [1,2,3,4,5].map(n=>`<button onclick="setRating(${n})" style="background:${rating>=n?'#ffaa4a22':'transparent'};border:1px solid ${rating>=n?'#ffaa4a44':'#2a2a38'};border-radius:8px;padding:8px 12px;cursor:pointer;font-size:18px;color:${rating>=n?'#ffaa4a':'#2a2a38'};transition:all 0.15s">${n}★</button>`).join('');
-  }
-  window.setRating = n => { rating=n; renderStars(); };
-  window._formRating = () => rating;
+  let rating=c.rating||0;
+  const sp=document.getElementById('star-picker');
+  function renderStars(){sp.innerHTML=[1,2,3,4,5].map(n=>`<button onclick="setRating(${n})" style="background:${rating>=n?'#ffaa4a22':'transparent'};border:1px solid ${rating>=n?'#ffaa4a44':'#2a2a38'};border-radius:8px;padding:8px 12px;cursor:pointer;font-size:18px;color:${rating>=n?'#ffaa4a':'#2a2a38'};transition:all 0.15s;font-family:'Inter',sans-serif">${n}★</button>`).join('');}
+  window.setRating=n=>{rating=n;renderStars();};
+  window._formRating=()=>rating;
   renderStars();
+
+  // Autocomplete: make
+  makeAutocomplete('f_make','ac-make',ALL_MAKES, val=>{
+    document.getElementById('f_make').value=val;
+    updateModelList();
+  });
+
+  // Autocomplete: model (based on current make)
+  const initModels = CAR_DATA[c.make]||[];
+  window._currentModels=initModels;
+  makeAutocomplete('f_model','ac-model',initModels,null);
+
+  // Carfax URL → enable open button
+  document.getElementById('f_carfaxUrl').addEventListener('input', e=>{
+    document.getElementById('carfax-open-btn').disabled=!e.target.value.trim();
+  });
+
+  // Photos
+  initPhotoZone();
 
   ['dashboard','compare','analyze'].forEach(v=>document.getElementById('view-'+v).style.display='none');
   formEl.style.display='block';
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
 }
 
-function closeForm() {
+function openCarfax(){
+  const url=document.getElementById('f_carfaxUrl')?.value.trim();
+  if(url) window.open(url,'_blank');
+}
+
+function closeForm(){
+  document.removeEventListener('paste',handlePaste);
   document.getElementById('view-form').style.display='none';
   showView(currentView==='form'?'dashboard':currentView);
 }
 
-function submitForm() {
-  const get = id => { const el=document.getElementById('f_'+id); return el?el.value.trim():''; };
-  const data = {};
-  Object.keys(DEFAULTS).forEach(k => data[k] = get(k));
-  data.rating = window._formRating ? window._formRating() : 0;
-  if (!data.make && !data.model) { alert('Please enter at least Make and Model'); return; }
-  if (editingCar) {
-    data.id = editingCar.id;
-    cars = cars.map(c=>c.id===data.id?data:c);
-  } else {
-    data.id = uid();
-    cars.push(data);
-  }
+function submitForm(){
+  const get=id=>{const el=document.getElementById('f_'+id);return el?el.value.trim():'';};
+  const data={};
+  Object.keys(DEFAULTS).forEach(k=>{if(k!=='photos')data[k]=get(k);});
+  data.rating=window._formRating?window._formRating():0;
+  data.photos=formPhotos.map(p=>({data:p.data,label:p.label,name:p.name}));
+  if(!data.make&&!data.model){alert('Please enter at least Make and Model');return;}
+  if(editingCar){data.id=editingCar.id;cars=cars.map(c=>c.id===data.id?data:c);}
+  else{data.id=uid();cars.push(data);}
   save();
-  editingCar = null;
+  editingCar=null;
+  document.removeEventListener('paste',handlePaste);
   document.getElementById('view-form').style.display='none';
   showView('dashboard');
 }
 
 // ── AI Compare ─────────────────────────────────────────────────────
-let selectedIds = [];
-function renderCompare() {
-  const el = document.getElementById('view-compare');
-  if (cars.length < 2) {
-    el.innerHTML = `<h2 class="brand" style="font-size:24px;font-weight:700;margin-bottom:8px">AI Compare</h2><p style="color:#7070a0;font-size:14px;margin-bottom:24px">Claude will rank your cars and pick the best one</p><div class="card" style="padding:40px;text-align:center"><p style="color:#7070a0">Add at least 2 cars to compare</p></div>`;
-    return;
-  }
-  const pills = cars.map(c=>`<button id="pill_${c.id}" onclick="togglePill('${c.id}')" style="padding:6px 14px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:500;border:1px solid #2a2a38;background:transparent;color:#a0a0b8;transition:all 0.15s;font-family:'Inter',sans-serif">${esc(c.year)} ${esc(c.make)} ${esc(c.model)}</button>`).join('');
-  el.innerHTML = `
-    <h2 class="brand" style="font-size:24px;font-weight:700;margin-bottom:6px">AI Compare</h2>
-    <p style="color:#7070a0;font-size:13px;margin-bottom:24px">Claude will rank your cars and recommend the best one</p>
-    <div class="card" style="padding:20px;margin-bottom:16px">
-      <p style="font-size:13px;color:#7070a0;margin-bottom:12px">Filter cars (or leave all for full comparison):</p>
-      <div style="display:flex;flex-wrap:wrap;gap:8px">${pills}</div>
-    </div>
-    <button class="btn btn-primary" id="compare-btn" onclick="runCompare()" style="width:100%;padding:14px;font-size:15px;margin-bottom:24px">✨ Compare with Claude</button>
-    <div id="compare-result"></div>`;
-  selectedIds = [];
+let selectedIds=[];
+function renderCompare(){
+  const el=document.getElementById('view-compare');
+  if(cars.length<2){el.innerHTML=`<h2 class="brand" style="font-size:24px;font-weight:700;margin-bottom:8px">AI Compare</h2><p style="color:#7070a0;font-size:14px;margin-bottom:24px">Claude will rank your cars and pick the best one</p><div class="card" style="padding:40px;text-align:center"><p style="color:#7070a0">Add at least 2 cars to compare</p></div>`;return;}
+  const pills=cars.map(c=>`<button id="pill_${c.id}" onclick="togglePill('${c.id}')" style="padding:6px 14px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:500;border:1px solid #2a2a38;background:transparent;color:#a0a0b8;transition:all 0.15s;font-family:'Inter',sans-serif">${esc(c.year)} ${esc(c.make)} ${esc(c.model)}</button>`).join('');
+  el.innerHTML=`<h2 class="brand" style="font-size:24px;font-weight:700;margin-bottom:6px">AI Compare</h2><p style="color:#7070a0;font-size:13px;margin-bottom:24px">Claude will rank your cars and recommend the best one</p><div class="card" style="padding:20px;margin-bottom:16px"><p style="font-size:13px;color:#7070a0;margin-bottom:12px">Filter cars to compare (default: all):</p><div style="display:flex;flex-wrap:wrap;gap:8px">${pills}</div></div><button class="btn btn-primary" id="compare-btn" onclick="runCompare()" style="width:100%;padding:14px;font-size:15px;margin-bottom:24px">✨ Compare with Claude</button><div id="compare-result"></div>`;
+  selectedIds=[];
 }
-
-function togglePill(id) {
-  const btn = document.getElementById('pill_'+id);
-  if (selectedIds.includes(id)) {
-    selectedIds = selectedIds.filter(x=>x!==id);
-    btn.style.borderColor='#2a2a38'; btn.style.background='transparent'; btn.style.color='#a0a0b8';
-  } else {
-    selectedIds.push(id);
-    btn.style.borderColor='#4a9eff'; btn.style.background='#4a9eff22'; btn.style.color='#4a9eff';
-  }
-}
-
-async function runCompare() {
-  if (!apiKey) { openSettings(); return; }
-  const list = selectedIds.length>0 ? cars.filter(c=>selectedIds.includes(String(c.id))) : cars;
-  if (list.length < 2) { alert('Select at least 2 cars'); return; }
-  const btn = document.getElementById('compare-btn');
-  const res = document.getElementById('compare-result');
-  btn.disabled=true; btn.textContent='Analyzing...';
+function togglePill(id){const btn=document.getElementById('pill_'+id);if(selectedIds.includes(id)){selectedIds=selectedIds.filter(x=>x!==id);btn.style.borderColor='#2a2a38';btn.style.background='transparent';btn.style.color='#a0a0b8';}else{selectedIds.push(id);btn.style.borderColor='#4a9eff';btn.style.background='#4a9eff22';btn.style.color='#4a9eff';}}
+async function runCompare(){
+  if(!apiKey){openSettings();return;}
+  const list=selectedIds.length>0?cars.filter(c=>selectedIds.includes(String(c.id))):cars;
+  if(list.length<2){alert('Select at least 2 cars');return;}
+  const btn=document.getElementById('compare-btn');
+  const res=document.getElementById('compare-result');
+  btn.disabled=true;btn.textContent='Analyzing...';
   res.innerHTML=`<div class="card" style="padding:24px;text-align:center"><div class="typing"><span></span><span></span><span></span></div><p style="font-size:13px;color:#7070a0;margin-top:12px">Claude is analyzing your cars...</p></div>`;
-  try {
-    const carData = list.map((c,i)=>`Car ${i+1}: ${c.year} ${c.make} ${c.model} ${c.trim}\n- Price: $${c.askingPrice||'?'} (KBB: $${c.kbbValue||'?'}, My target: $${c.targetPrice||'?'})\n- Mileage: ${c.mileage||'?'} mi, Owners: ${c.owners||'?'}, Accidents: ${c.accidentHistory}\n- Title: ${c.titleStatus} ${c.titleDamageNotes?'('+c.titleDamageNotes+')':''}\n- Repair est: $${c.repairCost||0}, Maintenance est: $${c.maintenanceCost||0}\n- Inspection: ${c.inspectionDone} ${c.inspectionNotes?'— '+c.inspectionNotes:''}\n- Seller: ${c.sellerType}, Location: ${c.location} (${c.distance||'?'} mi away)\n- Test drive: ${c.testDrive} ${c.testDriveNotes?'— '+c.testDriveNotes:''}\n- My rating: ${c.rating||'unrated'}/5\n- Pros: ${c.pros||'none'}\n- Cons: ${c.cons||'none'}\n- Issues: ${c.knownIssues||'none'}`).join('\n\n---\n\n');
-    const text = await callClaude(`I'm buying a used car. Here are my ${list.length} options:\n\n${carData}\n\nPlease:\n1. Rank them best to worst with a clear winner\n2. Value score for each (price vs mileage vs condition)\n3. Red flags to watch for each\n4. 2-3 questions to ask each seller\n5. Final verdict: which one and why?`);
+  try{
+    const carData=list.map((c,i)=>`Car ${i+1}: ${c.year} ${c.make} ${c.model} ${c.trim}\n- Price: $${c.askingPrice||'?'} (KBB: $${c.kbbValue||'?'}, Target: $${c.targetPrice||'?'})\n- Mileage: ${c.mileage||'?'} mi, Owners: ${c.owners||'?'}, Accidents: ${c.accidentHistory}\n- Title: ${c.titleStatus} ${c.titleDamageNotes?'('+c.titleDamageNotes+')':''}\n- Est. repair: $${c.repairCost||0}, maintenance: $${c.maintenanceCost||0}\n- Inspection: ${c.inspectionDone}${c.inspectionNotes?' — '+c.inspectionNotes:''}\n- Seller: ${c.sellerType}, Location: ${c.location} (${c.distance||'?'} mi)\n- Test drive: ${c.testDrive}${c.testDriveNotes?' — '+c.testDriveNotes:''}\n- My rating: ${c.rating||'unrated'}/5\n- Pros: ${c.pros||'none'}\n- Cons: ${c.cons||'none'}\n- Issues: ${c.knownIssues||'none'}`).join('\n\n---\n\n');
+    const text=await callClaude(`I'm buying a used car. Here are my ${list.length} options:\n\n${carData}\n\nPlease:\n1. Rank them best to worst with a clear winner\n2. Value score for each (price vs mileage vs condition)\n3. Red flags for each\n4. 2-3 questions to ask each seller\n5. Final verdict: which one and why?`);
     res.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span>✨</span><span style="font-size:13px;font-weight:600;color:#4a9eff">Claude's Analysis</span></div><div class="ai-bubble">${esc(text)}</div>`;
-  } catch(e) {
-    res.innerHTML=`<div class="ai-bubble" style="border-color:#ff4a4a">Error: ${esc(e.message)}</div>`;
-  }
-  btn.disabled=false; btn.textContent=`✨ Compare with Claude`;
+  }catch(e){res.innerHTML=`<div class="ai-bubble" style="border-color:#ff4a4a">Error: ${esc(e.message)}</div>`;}
+  btn.disabled=false;btn.textContent='✨ Compare with Claude';
 }
 
 // ── AI Analyze ─────────────────────────────────────────────────────
-function renderAnalyze() {
-  const el = document.getElementById('view-analyze');
-  el.innerHTML = `
-    <h2 class="brand" style="font-size:24px;font-weight:700;margin-bottom:6px">Analyze a Listing</h2>
-    <p style="font-size:13px;color:#7070a0;margin-bottom:24px">Paste any listing and Claude gives you a full buyer's assessment</p>
-    <div class="card" style="padding:24px;margin-bottom:16px">
-      <label>Paste the full listing text, description, or details</label>
-      <textarea id="listing-paste" rows="12" placeholder="Copy and paste everything from the listing — price, mileage, year, seller description, condition notes, anything you see on the page..."></textarea>
-    </div>
-    <button class="btn btn-primary" id="analyze-btn" onclick="runAnalyze()" style="width:100%;padding:14px;font-size:15px;margin-bottom:24px">🔍 Analyze with Claude</button>
-    <div id="analyze-result"></div>`;
+function renderAnalyze(){
+  const el=document.getElementById('view-analyze');
+  el.innerHTML=`<h2 class="brand" style="font-size:24px;font-weight:700;margin-bottom:6px">Analyze a Listing</h2><p style="font-size:13px;color:#7070a0;margin-bottom:24px">Paste any listing and Claude gives you a full buyer's assessment</p><div class="card" style="padding:24px;margin-bottom:16px"><label>Paste the full listing text, description, or details</label><textarea id="listing-paste" rows="12" placeholder="Copy and paste everything from the listing — price, mileage, year, seller description, condition notes..."></textarea></div><button class="btn btn-primary" id="analyze-btn" onclick="runAnalyze()" style="width:100%;padding:14px;font-size:15px;margin-bottom:24px">🔍 Analyze with Claude</button><div id="analyze-result"></div>`;
 }
-
-async function runAnalyze() {
-  if (!apiKey) { openSettings(); return; }
-  const paste = document.getElementById('listing-paste').value.trim();
-  if (!paste) { alert('Paste some listing details first'); return; }
-  const btn = document.getElementById('analyze-btn');
-  const res = document.getElementById('analyze-result');
-  btn.disabled=true; btn.textContent='Analyzing...';
-  res.innerHTML=`<div class="card" style="padding:24px;text-align:center"><div class="typing"><span></span><span></span><span></span></div><p style="font-size:13px;color:#7070a0;margin-top:12px">Claude is reviewing this listing...</p></div>`;
-  try {
-    const text = await callClaude(`Analyze this used car listing for a buyer:\n\n${paste}\n\nProvide:\n1. Quick verdict (Buy / Caution / Avoid) + one-line reason\n2. Price analysis — fair, overpriced, or a deal? By how much?\n3. Red flags (be specific)\n4. Green flags\n5. 5 questions to ask the seller\n6. Negotiation tips — what to push back on\n7. What to inspect in person\n8. Score out of 10`);
+async function runAnalyze(){
+  if(!apiKey){openSettings();return;}
+  const paste=document.getElementById('listing-paste').value.trim();
+  if(!paste){alert('Paste some listing details first');return;}
+  const btn=document.getElementById('analyze-btn');
+  const res=document.getElementById('analyze-result');
+  btn.disabled=true;btn.textContent='Analyzing...';
+  res.innerHTML=`<div class="card" style="padding:24px;text-align:center"><div class="typing"><span></span><span></span><span></span></div><p style="font-size:13px;color:#7070a0;margin-top:12px">Reviewing listing...</p></div>`;
+  try{
+    const text=await callClaude(`Analyze this used car listing for a buyer:\n\n${paste}\n\nProvide:\n1. Quick verdict (Buy / Caution / Avoid) + one-line reason\n2. Price analysis — fair, overpriced, or a deal? By how much?\n3. Red flags\n4. Green flags\n5. 5 questions to ask the seller\n6. Negotiation tips\n7. What to inspect in person\n8. Score out of 10`);
     res.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span>🔍</span><span style="font-size:13px;font-weight:600;color:#4a9eff">Claude's Assessment</span><button class="btn btn-ghost" style="margin-left:auto;font-size:12px;padding:6px 12px" onclick="openForm(null)">+ Add to tracker</button></div><div class="ai-bubble">${esc(text)}</div>`;
-  } catch(e) {
-    res.innerHTML=`<div class="ai-bubble" style="border-color:#ff4a4a">Error: ${esc(e.message)}\n\nMake sure your API key is set correctly.</div>`;
-  }
-  btn.disabled=false; btn.textContent='🔍 Analyze with Claude';
+  }catch(e){res.innerHTML=`<div class="ai-bubble" style="border-color:#ff4a4a">Error: ${esc(e.message)}\n\nCheck your API key is set correctly.</div>`;}
+  btn.disabled=false;btn.textContent='🔍 Analyze with Claude';
 }
 
 // ── Claude API ─────────────────────────────────────────────────────
-async function callClaude(prompt) {
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,system:'You are an expert used car advisor. Be direct, specific, and practical. Use concrete numbers.',messages:[{role:'user',content:prompt}]})
-  });
+async function callClaude(prompt){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,system:'You are an expert used car advisor. Be direct, specific, and practical.',messages:[{role:'user',content:prompt}]})});
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+r.status);}
-  const d=await r.json();
-  return d.content[0].text;
+  const d=await r.json();return d.content[0].text;
 }
 
 // ── Init ───────────────────────────────────────────────────────────
-if(apiKey){const b=document.querySelector('button[onclick="openSettings()"]');if(b)b.textContent='⚙ Key ✓';}
 showView('dashboard');
 </script>
 </body>
