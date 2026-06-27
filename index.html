@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CarPick — Smart Car Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#0f0f13;color:#e8e6e0;min-height:100vh}
+.brand{font-family:'Space Grotesk',sans-serif}
+.card{background:#1a1a22;border:1px solid #2a2a38;border-radius:12px}
+input,select,textarea{background:#12121a;border:1px solid #2a2a38;border-radius:8px;color:#e8e6e0;padding:10px 14px;font-family:'Inter',sans-serif;font-size:14px;width:100%;outline:none;transition:border-color 0.2s}
+input:focus,select:focus,textarea:focus{border-color:#4a9eff}
+input::placeholder,textarea::placeholder{color:#44445a}
+select option{background:#1a1a22}
+label{font-size:12px;font-weight:500;color:#7070a0;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;display:block}
+.btn{border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;transition:all 0.2s}
+.btn-primary{background:#4a9eff;color:#000;font-weight:600}
+.btn-primary:hover{background:#6ab0ff}
+.btn-primary:disabled{background:#2a3a50;color:#556;cursor:not-allowed}
+.btn-ghost{background:transparent;color:#a0a0b8;border:1px solid #2a2a38}
+.btn-ghost:hover{border-color:#4a4a60;color:#e8e6e0}
+.btn-danger{background:#ff4a4a22;color:#ff6b6b;border:1px solid #ff4a4a44}
+.btn-danger:hover{background:#ff4a4a33}
+.nav-item{padding:8px 14px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;color:#7070a0;border:none;background:transparent;transition:all 0.15s;font-family:'Inter',sans-serif}
+.nav-item:hover{background:#1e1e28;color:#e8e6e0}
+.nav-item.active{background:#4a9eff22;color:#4a9eff}
+.tag{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.ai-bubble{background:#151520;border-left:3px solid #4a9eff;border-radius:0 8px 8px 0;padding:16px 20px;font-size:14px;line-height:1.7;color:#c8c6d0;white-space:pre-wrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
+.fade-in{animation:fadeIn 0.25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.typing span{display:inline-block;width:6px;height:6px;border-radius:50%;background:#4a9eff;margin:0 2px;animation:bounce 1.2s infinite}
+.typing span:nth-child(2){animation-delay:0.2s}
+.typing span:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#0f0f13}
+::-webkit-scrollbar-thumb{background:#2a2a38;border-radius:3px}
+@media(max-width:600px){.grid2,.grid3{grid-template-columns:1fr}.grid-auto{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div id="nav" style="border-bottom:1px solid #1e1e28;padding:0 24px;position:sticky;top:0;background:#0f0f13;z-index:50">
+  <div style="max-width:900px;margin:0 auto;display:flex;align-items:center;height:56px;gap:8px">
+    <span class="brand" style="font-size:20px;font-weight:700;color:#4a9eff;margin-right:24px;white-space:nowrap">🚗 CarPick</span>
+    <button class="nav-item active" data-view="dashboard" onclick="showView('dashboard')">My Cars</button>
+    <button class="nav-item" data-view="compare" onclick="showView('compare')">✨ AI Compare</button>
+    <button class="nav-item" data-view="analyze" onclick="showView('analyze')">🔍 Analyze</button>
+    <button class="btn btn-ghost" style="margin-left:auto;padding:6px 14px;font-size:13px;white-space:nowrap" onclick="openSettings()">⚙ API Key</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div style="max-width:900px;margin:0 auto;padding:28px 16px">
+  <div id="api-warning" style="display:none;background:#1a1a10;border:1px solid #ffaa4a44;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
+    <span>⚠️</span>
+    <span style="font-size:13px;color:#ffaa4a">Set your Anthropic API key to use AI features</span>
+    <button class="btn btn-ghost" style="margin-left:auto;font-size:12px;padding:6px 12px" onclick="openSettings()">Set Key →</button>
+  </div>
+  <div id="view-dashboard" class="fade-in"></div>
+  <div id="view-compare" class="fade-in" style="display:none"></div>
+  <div id="view-analyze" class="fade-in" style="display:none"></div>
+  <div id="view-form" class="fade-in" style="display:none"></div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="modal-settings" class="overlay" style="display:none" onclick="if(event.target===this)closeSettings()">
+  <div class="card" style="width:100%;max-width:480px;padding:32px">
+    <h2 class="brand" style="font-size:20px;font-weight:700;margin-bottom:8px">API Key</h2>
+    <p style="font-size:13px;color:#7070a0;margin-bottom:20px">Stored only in your browser — never sent anywhere except Anthropic.</p>
+    <label>Anthropic API Key</label>
+    <input type="password" id="api-key-input" placeholder="sk-ant-..." style="margin-bottom:12px"/>
+    <p style="font-size:12px;color:#50507a;margin-bottom:24px">Get a free key at <a href="https://console.anthropic.com" target="_blank" style="color:#4a9eff">console.anthropic.com</a> — includes $5 free credit.</p>
+    <div style="display:flex;gap:12px">
+      <button class="btn btn-primary" onclick="saveApiKey()">Save</button>
+      <button class="btn btn-ghost" onclick="closeSettings()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────
+const STORE = 'carpick_cars';
+const KEY_STORE = 'carpick_key';
+let cars = [];
+let apiKey = '';
+let currentView = 'dashboard';
+let editingCar = null;
+
+try { cars = JSON.parse(localStorage.getItem(STORE)) || []; } catch{}
+apiKey = localStorage.getItem(KEY_STORE) || '';
+
+// ── Helpers ────────────────────────────────────────────────────────
+function save() { localStorage.setItem(STORE, JSON.stringify(cars)); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function stars(n) {
+  return [1,2,3,4,5].map(i=>`<span style="color:${i<=n?'#ffaa4a':'#2a2a38'}">★</span>`).join('');
+}
+function statusTag(s) {
+  const map = {Interested:'background:#1a3a5c;color:#4a9eff',Contacted:'background:#1a3a2a;color:#4aff90','Test Drove':'background:#3a2a1a;color:#ffaa4a',Passed:'background:#2a1a1a;color:#ff6b6b',Purchased:'background:#0d2a1a;color:#00e676'};
+  return `<span class="tag" style="${map[s]||map.Interested}">${esc(s)}</span>`;
+}
+function uid() { return Date.now() + Math.random(); }
+function fmtPrice(p) { return p ? '$'+parseInt(p).toLocaleString() : '—'; }
+
+// ── Nav ────────────────────────────────────────────────────────────
+function showView(v) {
+  ['dashboard','compare','analyze','form'].forEach(n => {
+    document.getElementById('view-'+n).style.display = n===v?'block':'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === v);
+  });
+  currentView = v;
+  checkApiWarning();
+  if (v==='dashboard') renderDashboard();
+  if (v==='compare') renderCompare();
+  if (v==='analyze') renderAnalyze();
+}
+
+function checkApiWarning() {
+  const w = document.getElementById('api-warning');
+  w.style.display = (!apiKey && currentView !== 'dashboard') ? 'flex' : 'none';
+}
+
+// ── Settings ───────────────────────────────────────────────────────
+function openSettings() {
+  document.getElementById('api-key-input').value = apiKey;
+  document.getElementById('modal-settings').style.display = 'flex';
+}
+function closeSettings() { document.getElementById('modal-settings').style.display = 'none'; }
+function saveApiKey() {
+  apiKey = document.getElementById('api-key-input').value.trim();
+  localStorage.setItem(KEY_STORE, apiKey);
+  closeSettings();
+  checkApiWarning();
+  const btn = document.querySelector('button[onclick="openSettings()"]');
+  if(btn) btn.textContent = apiKey ? '⚙ Key ✓' : '⚙ API Key';
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────
+function renderDashboard() {
+  const el = document.getElementById('view-dashboard');
+  if (!cars.length) {
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+        <h2 class="brand" style="font-size:24px;font-weight:700">My Cars</h2>
+        <button class="btn btn-primary" onclick="openForm(null)">+ Add Car</button>
+      </div>
+      <div class="card" style="padding:60px;text-align:center">
+        <div style="font-size:48px;margin-bottom:16px">🚗</div>
+        <p class="brand" style="font-size:18px;font-weight:600;margin-bottom:8px">No cars yet</p>
+        <p style="color:#7070a0;font-size:14px;margin-bottom:24px">Start tracking cars you're considering</p>
+        <button class="btn btn-primary" onclick="openForm(null)">Add your first car</button>
+      </div>`;
+    return;
+  }
+  const best = [...cars].sort((a,b)=>(b.rating||0)-(a.rating||0))[0];
+  const bestBanner = best ? `
+    <div style="background:linear-gradient(135deg,#0d2040,#0d1a30);border:1px solid #4a9eff33;border-radius:12px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <span style="font-size:28px">🏆</span>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#4a9eff;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Top Rated</div>
+        <div class="brand" style="font-size:17px;font-weight:700">${esc(best.year)} ${esc(best.make)} ${esc(best.model)}</div>
+        <div style="margin-top:4px">${stars(best.rating)} <span style="color:#7070a0;font-size:13px;margin-left:8px">${fmtPrice(best.askingPrice)}</span></div>
+      </div>
+      <button class="btn btn-ghost" style="margin-left:auto;font-size:13px" onclick="showView('compare')">Compare All →</button>
+    </div>` : '';
+
+  const carCards = cars.map(c => `
+    <div class="card" style="padding:18px 20px;display:flex;gap:16px;align-items:flex-start;transition:border-color 0.2s" onmouseover="this.style.borderColor='#4a9eff44'" onmouseout="this.style.borderColor='#2a2a38'">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+          <span class="brand" style="font-size:16px;font-weight:700">${esc(c.year)} ${esc(c.make)} ${esc(c.model)} ${esc(c.trim)}</span>
+          ${statusTag(c.status)}
+          ${c.rating ? stars(c.rating) : ''}
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:#7070a0">
+          ${c.askingPrice?`<span>💰 ${fmtPrice(c.askingPrice)}</span>`:''}
+          ${c.mileage?`<span>📍 ${parseInt(c.mileage).toLocaleString()} mi</span>`:''}
+          ${c.titleStatus?`<span>📋 ${esc(c.titleStatus)}</span>`:''}
+          ${c.location?`<span>📌 ${esc(c.location)}</span>`:''}
+        </div>
+        ${c.pros?`<p style="font-size:13px;color:#4aff90;margin-top:8px">✓ ${esc(c.pros.substring(0,100))}${c.pros.length>100?'…':''}</p>`:''}
+        ${c.cons?`<p style="font-size:13px;color:#ff8080;margin-top:4px">✗ ${esc(c.cons.substring(0,100))}${c.cons.length>100?'…':''}</p>`:''}
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button class="btn btn-ghost" style="padding:6px 14px;font-size:13px" onclick="openForm('${c.id}')">Edit</button>
+        <button class="btn btn-danger" style="padding:6px 12px;font-size:13px" onclick="deleteCar('${c.id}')">✕</button>
+      </div>
+    </div>`).join('');
+
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <div>
+        <h2 class="brand" style="font-size:24px;font-weight:700">My Cars</h2>
+        <p style="font-size:13px;color:#7070a0;margin-top:4px">${cars.length} tracked</p>
+      </div>
+      <button class="btn btn-primary" onclick="openForm(null)">+ Add Car</button>
+    </div>
+    ${bestBanner}
+    <div style="display:grid;gap:12px">${carCards}</div>`;
+}
+
+function deleteCar(id) {
+  if (!confirm('Remove this car?')) return;
+  cars = cars.filter(c => String(c.id) !== String(id));
+  save(); renderDashboard();
+}
+
+// ── Car Form ───────────────────────────────────────────────────────
+const DEFAULTS = {year:'',make:'',model:'',trim:'',color:'',vin:'',url:'',askingPrice:'',targetPrice:'',kbbValue:'',sellerType:'Dealer',mileage:'',titleStatus:'Clean',titleDamageNotes:'',owners:'',accidentHistory:'No',carfaxUrl:'',carfaxNotes:'',lastService:'',knownIssues:'',repairCost:'',maintenanceCost:'',inspectionDone:'No',inspectionNotes:'',location:'',distance:'',testDrive:'No',testDriveNotes:'',rating:0,pros:'',cons:'',status:'Interested',notes:''};
+
+function field(label, id, type='text', options=null, placeholder='') {
+  if (options) {
+    return `<div><label>${label}</label><select id="f_${id}">${options.map(o=>`<option>${o}</option>`).join('')}</select></div>`;
+  }
+  if (type==='textarea') {
+    return `<div><label>${label}</label><textarea id="f_${id}" rows="3" placeholder="${placeholder}"></textarea></div>`;
+  }
+  return `<div><label>${label}</label><input type="${type}" id="f_${id}" placeholder="${placeholder}"/></div>`;
+}
+
+function openForm(id) {
+  editingCar = id ? cars.find(c=>String(c.id)===String(id)) : null;
+  const c = editingCar || DEFAULTS;
+  const formEl = document.getElementById('view-form');
+  formEl.innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px">
+      <button class="btn btn-ghost" onclick="closeForm()" style="padding:8px 14px">← Back</button>
+      <h2 class="brand" style="font-size:22px;font-weight:700">${id?'Edit Car':'Add Car'}</h2>
+    </div>
+    <div style="display:grid;gap:20px">
+      <div class="card" style="padding:24px">
+        <p style="font-size:12px;font-weight:600;color:#4a9eff;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Basic Info</p>
+        <div class="grid-auto">
+          ${field('Year','year','text','','2021')}
+          ${field('Make','make','text','','Toyota')}
+          ${field('Model','model','text','','Camry')}
+          ${field('Trim','trim','text','','SE')}
+          ${field('Color','color','text','','Silver')}
+          ${field('VIN','vin','text','','1HGBH41...')}
+        </div>
+        <div style="margin-top:16px">${field('Listing URL','url','text','','https://cars.com/...')}</div>
+      </div>
+      <div class="card" style="padding:24px">
+        <p style="font-size:12px;font-weight:600;color:#4aff90;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Pricing</p>
+        <div class="grid-auto">
+          ${field('Asking Price ($)','askingPrice','number','','18500')}
+          ${field('Your Target ($)','targetPrice','number','','17000')}
+          ${field('KBB Value ($)','kbbValue','number','','19000')}
+          ${field('Seller Type','sellerType','',['Dealer','Private Seller','CPO'])}
+        </div>
+      </div>
+      <div class="card" style="padding:24px">
+        <p style="font-size:12px;font-weight:600;color:#ffaa4a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Condition</p>
+        <div class="grid-auto">
+          ${field('Mileage','mileage','number','','45000')}
+          ${field('Title Status','titleStatus','',['Clean','Salvage','Rebuilt','Lemon'])}
+          ${field('# of Owners','owners','number','','2')}
+          ${field('Accident History','accidentHistory','',['No','Yes','Unknown'])}
+        </div>
+        <div class="grid2" style="margin-top:16px">
+          ${field('Title Damage Notes','titleDamageNotes','textarea','','Any issues...')}
+          ${field('Carfax Notes','carfaxNotes','textarea','','Report summary...')}
+        </div>
+        <div style="margin-top:16px">${field('Carfax URL','carfaxUrl','text','','https://carfax.com/...')}</div>
+      </div>
+      <div class="card" style="padding:24px">
+        <p style="font-size:12px;font-weight:600;color:#d080ff;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Maintenance & Cost</p>
+        <div class="grid-auto">
+          ${field('Last Service','lastService','date')}
+          ${field('Est. Repair Cost ($)','repairCost','number','','500')}
+          ${field('Est. Maintenance ($)','maintenanceCost','number','','800')}
+          ${field('Inspection Done?','inspectionDone','',['No','Yes','Scheduled'])}
+        </div>
+        <div class="grid2" style="margin-top:16px">
+          ${field('Known Issues','knownIssues','textarea','','Any problems...')}
+          ${field('Inspection Notes','inspectionNotes','textarea','','Mechanic findings...')}
+        </div>
+      </div>
+      <div class="card" style="padding:24px">
+        <p style="font-size:12px;font-weight:600;color:#ff8080;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Practical</p>
+        <div class="grid-auto">
+          ${field('Location','location','text','','Dallas, TX')}
+          ${field('Distance (miles)','distance','number','','12')}
+          ${field('Test Drive?','testDrive','',['No','Yes','Scheduled'])}
+        </div>
+        <div style="margin-top:16px">${field('Test Drive Notes','testDriveNotes','textarea','','How did it feel?')}</div>
+      </div>
+      <div class="card" style="padding:24px">
+        <p style="font-size:12px;font-weight:600;color:#80ffcc;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:18px">Your Decision</p>
+        <div class="grid2" style="margin-bottom:16px">
+          <div>
+            <label>Overall Rating</label>
+            <div id="star-picker" style="display:flex;gap:6px;margin-top:4px"></div>
+          </div>
+          ${field('Status','status','',['Interested','Contacted','Test Drove','Passed','Purchased'])}
+        </div>
+        <div class="grid2">
+          ${field('Pros','pros','textarea','','What you like...')}
+          ${field('Cons','cons','textarea','','What concerns you...')}
+        </div>
+        <div style="margin-top:16px">${field('Notes','notes','textarea','','Anything else...')}</div>
+      </div>
+      <div style="display:flex;gap:12px;padding-bottom:40px">
+        <button class="btn btn-primary" style="flex:1;padding:14px;font-size:15px" onclick="submitForm()">${id?'Save Changes':'Add Car'}</button>
+        <button class="btn btn-ghost" onclick="closeForm()">Cancel</button>
+      </div>
+    </div>`;
+
+  // Populate values
+  Object.keys(DEFAULTS).forEach(k => {
+    const el = document.getElementById('f_'+k);
+    if (el) el.value = c[k] || '';
+  });
+
+  // Star picker
+  let rating = c.rating || 0;
+  const sp = document.getElementById('star-picker');
+  function renderStars() {
+    sp.innerHTML = [1,2,3,4,5].map(n=>`<button onclick="setRating(${n})" style="background:${rating>=n?'#ffaa4a22':'transparent'};border:1px solid ${rating>=n?'#ffaa4a44':'#2a2a38'};border-radius:8px;padding:8px 12px;cursor:pointer;font-size:18px;color:${rating>=n?'#ffaa4a':'#2a2a38'};transition:all 0.15s">${n}★</button>`).join('');
+  }
+  window.setRating = n => { rating=n; renderStars(); };
+  window._formRating = () => rating;
+  renderStars();
+
+  ['dashboard','compare','analyze'].forEach(v=>document.getElementById('view-'+v).style.display='none');
+  formEl.style.display='block';
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+}
+
+function closeForm() {
+  document.getElementById('view-form').style.display='none';
+  showView(currentView==='form'?'dashboard':currentView);
+}
+
+function submitForm() {
+  const get = id => { const el=document.getElementById('f_'+id); return el?el.value.trim():''; };
+  const data = {};
+  Object.keys(DEFAULTS).forEach(k => data[k] = get(k));
+  data.rating = window._formRating ? window._formRating() : 0;
+  if (!data.make && !data.model) { alert('Please enter at least Make and Model'); return; }
+  if (editingCar) {
+    data.id = editingCar.id;
+    cars = cars.map(c=>c.id===data.id?data:c);
+  } else {
+    data.id = uid();
+    cars.push(data);
+  }
+  save();
+  editingCar = null;
+  document.getElementById('view-form').style.display='none';
+  showView('dashboard');
+}
+
+// ── AI Compare ─────────────────────────────────────────────────────
+let selectedIds = [];
+function renderCompare() {
+  const el = document.getElementById('view-compare');
+  if (cars.length < 2) {
+    el.innerHTML = `<h2 class="brand" style="font-size:24px;font-weight:700;margin-bottom:8px">AI Compare</h2><p style="color:#7070a0;font-size:14px;margin-bottom:24px">Claude will rank your cars and pick the best one</p><div class="card" style="padding:40px;text-align:center"><p style="color:#7070a0">Add at least 2 cars to compare</p></div>`;
+    return;
+  }
+  const pills = cars.map(c=>`<button id="pill_${c.id}" onclick="togglePill('${c.id}')" style="padding:6px 14px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:500;border:1px solid #2a2a38;background:transparent;color:#a0a0b8;transition:all 0.15s;font-family:'Inter',sans-serif">${esc(c.year)} ${esc(c.make)} ${esc(c.model)}</button>`).join('');
+  el.innerHTML = `
+    <h2 class="brand" style="font-size:24px;font-weight:700;margin-bottom:6px">AI Compare</h2>
+    <p style="color:#7070a0;font-size:13px;margin-bottom:24px">Claude will rank your cars and recommend the best one</p>
+    <div class="card" style="padding:20px;margin-bottom:16px">
+      <p style="font-size:13px;color:#7070a0;margin-bottom:12px">Filter cars (or leave all for full comparison):</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">${pills}</div>
+    </div>
+    <button class="btn btn-primary" id="compare-btn" onclick="runCompare()" style="width:100%;padding:14px;font-size:15px;margin-bottom:24px">✨ Compare with Claude</button>
+    <div id="compare-result"></div>`;
+  selectedIds = [];
+}
+
+function togglePill(id) {
+  const btn = document.getElementById('pill_'+id);
+  if (selectedIds.includes(id)) {
+    selectedIds = selectedIds.filter(x=>x!==id);
+    btn.style.borderColor='#2a2a38'; btn.style.background='transparent'; btn.style.color='#a0a0b8';
+  } else {
+    selectedIds.push(id);
+    btn.style.borderColor='#4a9eff'; btn.style.background='#4a9eff22'; btn.style.color='#4a9eff';
+  }
+}
+
+async function runCompare() {
+  if (!apiKey) { openSettings(); return; }
+  const list = selectedIds.length>0 ? cars.filter(c=>selectedIds.includes(String(c.id))) : cars;
+  if (list.length < 2) { alert('Select at least 2 cars'); return; }
+  const btn = document.getElementById('compare-btn');
+  const res = document.getElementById('compare-result');
+  btn.disabled=true; btn.textContent='Analyzing...';
+  res.innerHTML=`<div class="card" style="padding:24px;text-align:center"><div class="typing"><span></span><span></span><span></span></div><p style="font-size:13px;color:#7070a0;margin-top:12px">Claude is analyzing your cars...</p></div>`;
+  try {
+    const carData = list.map((c,i)=>`Car ${i+1}: ${c.year} ${c.make} ${c.model} ${c.trim}\n- Price: $${c.askingPrice||'?'} (KBB: $${c.kbbValue||'?'}, My target: $${c.targetPrice||'?'})\n- Mileage: ${c.mileage||'?'} mi, Owners: ${c.owners||'?'}, Accidents: ${c.accidentHistory}\n- Title: ${c.titleStatus} ${c.titleDamageNotes?'('+c.titleDamageNotes+')':''}\n- Repair est: $${c.repairCost||0}, Maintenance est: $${c.maintenanceCost||0}\n- Inspection: ${c.inspectionDone} ${c.inspectionNotes?'— '+c.inspectionNotes:''}\n- Seller: ${c.sellerType}, Location: ${c.location} (${c.distance||'?'} mi away)\n- Test drive: ${c.testDrive} ${c.testDriveNotes?'— '+c.testDriveNotes:''}\n- My rating: ${c.rating||'unrated'}/5\n- Pros: ${c.pros||'none'}\n- Cons: ${c.cons||'none'}\n- Issues: ${c.knownIssues||'none'}`).join('\n\n---\n\n');
+    const text = await callClaude(`I'm buying a used car. Here are my ${list.length} options:\n\n${carData}\n\nPlease:\n1. Rank them best to worst with a clear winner\n2. Value score for each (price vs mileage vs condition)\n3. Red flags to watch for each\n4. 2-3 questions to ask each seller\n5. Final verdict: which one and why?`);
+    res.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span>✨</span><span style="font-size:13px;font-weight:600;color:#4a9eff">Claude's Analysis</span></div><div class="ai-bubble">${esc(text)}</div>`;
+  } catch(e) {
+    res.innerHTML=`<div class="ai-bubble" style="border-color:#ff4a4a">Error: ${esc(e.message)}</div>`;
+  }
+  btn.disabled=false; btn.textContent=`✨ Compare with Claude`;
+}
+
+// ── AI Analyze ─────────────────────────────────────────────────────
+function renderAnalyze() {
+  const el = document.getElementById('view-analyze');
+  el.innerHTML = `
+    <h2 class="brand" style="font-size:24px;font-weight:700;margin-bottom:6px">Analyze a Listing</h2>
+    <p style="font-size:13px;color:#7070a0;margin-bottom:24px">Paste any listing and Claude gives you a full buyer's assessment</p>
+    <div class="card" style="padding:24px;margin-bottom:16px">
+      <label>Paste the full listing text, description, or details</label>
+      <textarea id="listing-paste" rows="12" placeholder="Copy and paste everything from the listing — price, mileage, year, seller description, condition notes, anything you see on the page..."></textarea>
+    </div>
+    <button class="btn btn-primary" id="analyze-btn" onclick="runAnalyze()" style="width:100%;padding:14px;font-size:15px;margin-bottom:24px">🔍 Analyze with Claude</button>
+    <div id="analyze-result"></div>`;
+}
+
+async function runAnalyze() {
+  if (!apiKey) { openSettings(); return; }
+  const paste = document.getElementById('listing-paste').value.trim();
+  if (!paste) { alert('Paste some listing details first'); return; }
+  const btn = document.getElementById('analyze-btn');
+  const res = document.getElementById('analyze-result');
+  btn.disabled=true; btn.textContent='Analyzing...';
+  res.innerHTML=`<div class="card" style="padding:24px;text-align:center"><div class="typing"><span></span><span></span><span></span></div><p style="font-size:13px;color:#7070a0;margin-top:12px">Claude is reviewing this listing...</p></div>`;
+  try {
+    const text = await callClaude(`Analyze this used car listing for a buyer:\n\n${paste}\n\nProvide:\n1. Quick verdict (Buy / Caution / Avoid) + one-line reason\n2. Price analysis — fair, overpriced, or a deal? By how much?\n3. Red flags (be specific)\n4. Green flags\n5. 5 questions to ask the seller\n6. Negotiation tips — what to push back on\n7. What to inspect in person\n8. Score out of 10`);
+    res.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span>🔍</span><span style="font-size:13px;font-weight:600;color:#4a9eff">Claude's Assessment</span><button class="btn btn-ghost" style="margin-left:auto;font-size:12px;padding:6px 12px" onclick="openForm(null)">+ Add to tracker</button></div><div class="ai-bubble">${esc(text)}</div>`;
+  } catch(e) {
+    res.innerHTML=`<div class="ai-bubble" style="border-color:#ff4a4a">Error: ${esc(e.message)}\n\nMake sure your API key is set correctly.</div>`;
+  }
+  btn.disabled=false; btn.textContent='🔍 Analyze with Claude';
+}
+
+// ── Claude API ─────────────────────────────────────────────────────
+async function callClaude(prompt) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,system:'You are an expert used car advisor. Be direct, specific, and practical. Use concrete numbers.',messages:[{role:'user',content:prompt}]})
+  });
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+r.status);}
+  const d=await r.json();
+  return d.content[0].text;
+}
+
+// ── Init ───────────────────────────────────────────────────────────
+if(apiKey){const b=document.querySelector('button[onclick="openSettings()"]');if(b)b.textContent='⚙ Key ✓';}
+showView('dashboard');
+</script>
+</body>
+</html>
